@@ -6,13 +6,13 @@
 
 ### 选择的实现方案
 
-| 模块 | 实现方式 |
-|------|----------|
-| 文件访问方式 | 非阻塞I/O |
-| 通信模式 | 共享内存 |
-| 同步机制 | 条件变量 |
-| 调度策略 | 时间片轮转(RR) |
-| 磁盘组织方式 | 位图+索引 |
+| 模块         | 实现方式       |
+| ------------ | -------------- |
+| 文件访问方式 | 非阻塞I/O      |
+| 通信模式     | 共享内存       |
+| 同步机制     | 条件变量       |
+| 调度策略     | 时间片轮转(RR) |
+| 磁盘组织方式 | 位图+索引      |
 
 ## 🏗️ 项目架构
 
@@ -37,6 +37,7 @@ OS-Project/
 ## 🔧 技术栈
 
 ### 后端
+
 - **Python 3.8+** - 主要编程语言
 - **Flask** - Web框架
 - **Flask-SocketIO** - WebSocket实时通信
@@ -44,6 +45,7 @@ OS-Project/
 - **threading** - 多线程支持
 
 ### 前端
+
 - **React + TypeScript (Vite)** - 组件化单页应用
 - **Socket.IO Client** - WebSocket 客户端
 - **CSS Grid/Flexbox** - 现代布局
@@ -52,14 +54,17 @@ OS-Project/
 ## 📦 安装与运行
 
 ### 1. 环境要求
+
 - Python 3.8 或更高版本
 - pip 包管理器
 
 ### 2. 安装依赖
+
 ```bash
 # 后端
 cd backend
-pip install -e .
+uv sync
+uv run app.py
 
 # 前端
 cd ../frontend
@@ -67,6 +72,7 @@ npm install
 ```
 
 ### 3. 启动服务
+
 ```bash
 # 后端 API (Flask + Socket.IO)
 cd backend
@@ -78,6 +84,7 @@ npm run dev    # 默认 http://localhost:5173，经 vite.config.ts 代理 /api �
 ```
 
 ### 4. 访问界面
+
 浏览器打开 http://localhost:5173 （生产环境请先 npm run build 再用静态服务器托管 dist/）
 
 ## 🎯 功能模块详解
@@ -85,6 +92,7 @@ npm run dev    # 默认 http://localhost:5173，经 vite.config.ts 代理 /api �
 ### 1. 虚拟磁盘模块 (disk.py)
 
 #### 磁盘结构
+
 - **总大小**: 64KB (1024块 × 64字节/块)
 - **布局**:
   - 块0: 超级块
@@ -93,6 +101,7 @@ npm run dev    # 默认 http://localhost:5173，经 vite.config.ts 代理 /api �
   - 块35-1023: 数据区
 
 #### 核心功能
+
 ```python
 class VirtualDisk:
     def allocate_block() -> int          # 分配空闲块
@@ -103,6 +112,7 @@ class VirtualDisk:
 ```
 
 #### 位图管理算法
+
 ```
 位图采用字节数组存储，每个bit对应一个磁盘块
 - 0 表示空闲
@@ -115,21 +125,23 @@ class VirtualDisk:
 ### 2. 文件系统模块 (filesystem.py)
 
 #### iNode结构 (64字节)
-| 偏移 | 大小 | 字段 |
-|------|------|------|
-| 0-1 | 2B | iNode ID |
-| 2 | 1B | 文件类型 (0=空闲, 1=目录, 2=文件) |
-| 3 | 1B | 权限 (rwx) |
-| 4-7 | 4B | 文件大小 |
-| 8-15 | 8B | 创建时间 |
-| 16-23 | 8B | 修改时间 |
-| 24-25 | 2B | 链接计数 |
-| 26-37 | 12B | 直接索引块 (6个) |
-| 38-39 | 2B | 一级间接索引 |
-| 40-41 | 2B | 二级间接索引 |
-| 42-63 | 22B | 保留 |
+
+| 偏移  | 大小 | 字段                              |
+| ----- | ---- | --------------------------------- |
+| 0-1   | 2B   | iNode ID                          |
+| 2     | 1B   | 文件类型 (0=空闲, 1=目录, 2=文件) |
+| 3     | 1B   | 权限 (rwx)                        |
+| 4-7   | 4B   | 文件大小                          |
+| 8-15  | 8B   | 创建时间                          |
+| 16-23 | 8B   | 修改时间                          |
+| 24-25 | 2B   | 链接计数                          |
+| 26-37 | 12B  | 直接索引块 (6个)                  |
+| 38-39 | 2B   | 一级间接索引                      |
+| 40-41 | 2B   | 二级间接索引                      |
+| 42-63 | 22B  | 保留                              |
 
 #### 混合索引结构
+
 ```
 文件块索引采用混合索引方式：
 - 直接索引：6个直接块指针，可寻址 6×64B = 384B
@@ -140,12 +152,14 @@ class VirtualDisk:
 ```
 
 #### 目录项结构 (26字节)
-| 偏移 | 大小 | 字段 |
-|------|------|------|
-| 0-23 | 24B | 文件名 (UTF-8) |
-| 24-25 | 2B | iNode号 |
+
+| 偏移  | 大小 | 字段           |
+| ----- | ---- | -------------- |
+| 0-23  | 24B  | 文件名 (UTF-8) |
+| 24-25 | 2B   | iNode号        |
 
 #### 文件操作API
+
 ```python
 class FileSystem:
     def create_file(filename, content, permissions)  # 创建文件
@@ -159,6 +173,7 @@ class FileSystem:
 ```
 
 #### 非阻塞I/O实现
+
 ```python
 def open_file(self, filename, process_id, mode):
     # 非阻塞I/O：如果文件被占用，立即返回而不等待
@@ -174,6 +189,7 @@ def open_file(self, filename, process_id, mode):
 ### 3. 内存缓冲模块 (buffer.py)
 
 #### 缓冲页结构
+
 ```python
 @dataclass
 class BufferPage:
@@ -187,10 +203,12 @@ class BufferPage:
 ```
 
 #### 配置参数
+
 - 缓冲页数量 K = 16
 - 每页大小 = 64B（与磁盘块相同）
 
 #### LRU页面置换算法
+
 ```python
 def _find_victim_lru(self) -> Optional[int]:
     """
@@ -201,24 +219,25 @@ def _find_victim_lru(self) -> Optional[int]:
     """
     victim = None
     oldest_time = float('inf')
-    
+  
     for i, page in enumerate(self.pages):
         if page.is_pinned:
             continue
         if page.state != PageState.FREE and page.access_time < oldest_time:
             oldest_time = page.access_time
             victim = i
-    
+  
     return victim
 ```
 
 #### 条件变量同步
+
 ```python
 class BufferManager:
     def __init__(self):
         self.lock = threading.RLock()
         self.condition = threading.Condition(self.lock)
-    
+  
     def wait_for_page(self, block_id, process_id, timeout=None):
         """使用条件变量等待页面可用"""
         with self.condition:
@@ -232,6 +251,7 @@ class BufferManager:
 ### 4. 进程管理模块 (process.py)
 
 #### 进程控制块 (PCB)
+
 ```python
 @dataclass
 class Process:
@@ -246,6 +266,7 @@ class Process:
 ```
 
 #### 进程状态转换
+
 ```
      ┌─────────────────────────────┐
      │                             ▼
@@ -260,6 +281,7 @@ class Process:
 ### 5. 共享内存模块 (ipc.py)
 
 #### 共享内存实现
+
 ```python
 class SharedMemorySegment:
     def __init__(self, key: int, size: int):
@@ -268,7 +290,7 @@ class SharedMemorySegment:
         self.condition = threading.Condition(self.lock)
         self.readers = 0
         self.writers = 0
-    
+  
     def read(self, offset, length, process_id):
         """读者-写者问题：允许多个读者同时读"""
         with self.condition:
@@ -276,7 +298,7 @@ class SharedMemorySegment:
                 self.condition.wait()
             self.readers += 1
         # ... 读取数据 ...
-    
+  
     def write(self, offset, data, process_id):
         """写者需要独占访问"""
         with self.condition:
@@ -289,36 +311,38 @@ class SharedMemorySegment:
 ### 6. RR调度器模块 (scheduler.py)
 
 #### 时间片轮转算法
+
 ```python
 class RRScheduler:
     def __init__(self, process_manager, time_quantum=100):
         self.time_quantum = time_quantum  # 默认100ms
         self.ready_queue: List[int] = []  # 就绪队列
-    
+  
     def _scheduler_loop(self):
         while self.state == SchedulerState.RUNNING:
             next_pid = self._select_next_process()
-            
+          
             if next_pid is None:
                 # 空闲等待
                 continue
-            
+          
             # 调度进程运行
             self._dispatch(next_pid)
-            
+          
             # 运行一个时间片
             self._run_time_slice()
-    
+  
     def _run_time_slice(self):
         """运行一个时间片后抢占"""
         time.sleep(self.time_quantum / 1000.0)
-        
+      
         if process.state == ProcessState.RUNNING:
             # 时间片用完，放回队列尾部
             self._preempt_current()
 ```
 
 #### RR调度流程
+
 ```
 1. 从就绪队列头部取出进程
 2. 分配CPU给该进程
@@ -333,6 +357,7 @@ class RRScheduler:
 ## 🖥️ 前端界面
 
 ### 功能面板
+
 1. **仪表盘** - 系统状态总览
 2. **文件管理** - 文件的增删改查
 3. **磁盘可视化** - 位图显示磁盘块使用情况
@@ -342,6 +367,7 @@ class RRScheduler:
 7. **终端** - 命令行界面
 
 ### 终端命令
+
 ```
 ls              - 列出当前目录文件
 cat <file>      - 查看文件内容
@@ -360,16 +386,19 @@ help            - 显示帮助
 ## 📊 可视化特性
 
 ### 磁盘位图可视化
+
 - 不同颜色区分：超级块(红)、位图(橙)、iNode区(紫)、已用块(青)、空闲块(灰)
 - 点击块查看十六进制和文本内容
 - 实时更新显示
 
 ### 缓冲区可视化
+
 - 显示16个缓冲页状态
 - 颜色区分：空闲/干净/脏页
 - 置换日志实时显示
 
 ### 调度器可视化
+
 - 就绪队列显示
 - 调度事件时间线
 - CPU利用率统计
@@ -377,25 +406,29 @@ help            - 显示帮助
 ## 🔒 同步与互斥机制
 
 ### 条件变量使用场景
+
 1. **缓冲区管理**
+
    - 等待空闲缓冲页
    - 页面写回完成通知
-
 2. **共享内存访问**
+
    - 读者-写者问题
    - 写者独占访问
-
 3. **进程同步**
+
    - 等待进程完成
    - 就绪队列通知
 
 ### 锁的使用
+
 - `threading.RLock()` - 可重入锁，防止死锁
 - `threading.Condition()` - 条件变量
 
 ## 📈 性能指标
 
 系统提供以下性能统计：
+
 - 磁盘使用率
 - 缓冲区命中率
 - 页面置换次数
@@ -405,12 +438,14 @@ help            - 显示帮助
 ## 🧪 测试方法
 
 ### 功能测试
+
 1. 创建/删除文件
 2. 读写文件内容
 3. 目录操作
 4. 并发文件访问
 
 ### 性能测试
+
 1. 大文件读写
 2. 多进程并发
 3. 缓冲区压力测试
@@ -446,4 +481,3 @@ help            - 显示帮助
 ---
 
 © 2025 操作系统课程设计
-
