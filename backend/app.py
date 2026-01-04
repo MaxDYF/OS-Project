@@ -650,6 +650,21 @@ def buffer_log():
     return jsonify({'log': log})
 
 
+@app.route('/api/buffer/access', methods=['POST'])
+def buffer_access_block():
+    """访问指定磁盘块；若不在缓冲中则触发置换"""
+    data = request.get_json(silent=True) or {}
+    try:
+        block_id = int(data.get('block_id', -1))
+    except Exception:
+        return jsonify({'success': False, 'error': 'block_id 需为整数'}), 400
+    if block_id < 0:
+        return jsonify({'success': False, 'error': 'block_id 必须 >= 0'}), 400
+
+    result = buffer_manager.access_block(block_id)
+    return jsonify(result)
+
+
 # ==================== 进程API ====================
 @app.route('/api/processes', methods=['GET'])
 def list_processes():

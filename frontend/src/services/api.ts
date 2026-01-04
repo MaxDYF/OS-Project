@@ -5,6 +5,8 @@ import type {
   FileReadResponse,
   ProcessesResponse,
   BufferStatusResponse,
+  BufferStats,
+  BufferPage,
   SchedulerStatusResponse,
   ApiResponse,
 } from '../types';
@@ -119,6 +121,21 @@ export async function getBufferLog(): Promise<{ log: Array<{ timestamp: number; 
   return fetchApi('/api/buffer/log');
 }
 
+export async function accessBufferBlock(blockId: number): Promise<ApiResponse & {
+  success: boolean;
+  hit?: boolean;
+  block_id?: number;
+  page_id?: number | null;
+  stats?: BufferStats;
+  log?: Array<{ timestamp: number; type: string; page_id: number; block_id: number; process_id?: number }>;
+  pages?: BufferPage[];
+}> {
+  return fetchApi('/api/buffer/access', {
+    method: 'POST',
+    body: JSON.stringify({ block_id: blockId }),
+  });
+}
+
 // Process APIs
 export async function getProcesses(): Promise<ProcessesResponse> {
   return fetchApi<ProcessesResponse>('/api/processes');
@@ -226,7 +243,7 @@ export async function getIPCStatus(): Promise<{ segments: Array<{ key: number; s
 }
 
 export async function createSharedMemory(size: number): Promise<ApiResponse & { key: number }> {
-  return fetchApi('/api/shm', {
+  return fetchApi<ApiResponse & { key: number }>('/api/shm', {
     method: 'POST',
     body: JSON.stringify({ size }),
   });
